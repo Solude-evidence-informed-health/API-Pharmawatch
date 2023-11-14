@@ -1,7 +1,9 @@
 from pydantic import BaseModel
-from models.medicine import Medicine
-from models.utils import PaginationBase
 from typing import List
+
+from src.models.medicine import Medicine
+from src.models.utils import PaginationBase
+
 
 class ResponseMedicineList(PaginationBase):
     data : List[Medicine]

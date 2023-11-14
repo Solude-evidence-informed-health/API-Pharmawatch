@@ -1,13 +1,17 @@
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
-from services.bigquery_auth_service import BigQueryAuthService
-from services.bigquery_upload_service import BigQueryDataUploadService
-from src.models.upload_data import RawMedicineData
-from models.user import User
 import csv
+import pandas as pd
 import io
+from icecream import ic
+
+from src.services.bigquery_auth_service import BigQueryAuthService
+from src.services.bigquery_upload_service import BigQueryDataUploadService
+from src.models.upload_data import RawMedicineData
+from src.models.user import User
 
 
 router = APIRouter()
+bq_auth_service = BigQueryAuthService()
 
 
 mock_user = User(
@@ -25,26 +29,41 @@ async def upload_medicine_data(
     user: User = mock_user
 ):
     try:
-        client, user_dataset = BigQueryAuthService.get_client(user.token)
+        ic(file.filename)
+        ic(user.token)
+        client, user_dataset = bq_auth_service.get_client(user.token)
         upload_service = BigQueryDataUploadService(client, user_dataset, user)
 
         contents = await file.read()
+        # read the file into a pandas dataframe according to the file type
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+        elif file.filename.endswith('.xlsx'):
+            df = pd.read_excel(io.BytesIO(contents))
+        else:
+            raise HTTPException(status_code=400, detail="Invalid file type")
         
-        decoded_file = io.StringIO(contents.decode('utf-8'))
-        csv_reader = csv.DictReader(decoded_file)
-        
-        for row in csv_reader:
+        df = df.where(pd.notnull(df), None)
+        upload_data = df.to_dict(orient='records')
+
+        for row in upload_data:
             try:
+                row['Quantidade'] = row['Quantidade'].replace(',', '.')
+                row['Valor unitário (R$)'] = row['Valor unitário (R$)'].replace(',', '.')
+                row['Valor unitário (R$)'] = row['Valor unitário (R$)'].replace('.', '')
+                row['Valor total (R$)'] = row['Valor total (R$)'].replace(',', '.')
+                row['Valor total (R$)'] = row['Valor total (R$)'].replace('.', '')
+
                 upload_data = RawMedicineData(
-                    descr_medicine=str(row['descr_medicine']),
-                    descr_unit_type=str(row['descr_unit_type']),
-                    unit_quantity=int(row['unit_quantity']),
-                    unit_value=float(row['unit_value']),
-                    total_value=float(row['total_value']),
-                    month=int(row['month']),
-                    year=int(row['year']),
-                    descr_origin=str(row['descr_origin']),
-                    descr_destination=str(row['descr_destination']),
+                    descr_medicine=str(row['Material']),
+                    descr_unit_type=str(row['Unidade']),
+                    unit_quantity=float(row['Quantidade']),
+                    unit_value=float(row['Valor unitário (R$)']),
+                    total_value=float(row['Valor total (R$)']),
+                    month=int(row['Mês']),
+                    year=int(row['Ano']),
+                    descr_origin=str(row['Local']),
+                    descr_destination=str(row['Destino']),
                 )
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e))
@@ -52,4 +71,5 @@ async def upload_medicine_data(
 
         return {"message": "Data uploaded successfully"}
     except Exception as e:
+        ic(e)
         raise HTTPException(status_code=500, detail=str(e))

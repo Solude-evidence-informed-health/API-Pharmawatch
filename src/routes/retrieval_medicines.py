@@ -1,15 +1,18 @@
 from fastapi import APIRouter, HTTPException
-from services.bigquery_auth_service import BigQueryAuthService
-from services.bigquery_upload_service import BigQueryDataUploadService
-from services.bigquery_retrieval_service import BigQueryDataRetrievalService
-from src.handlers.retrieval_queries import MedicinesQuerier
-from models.response_data import ResponseMedicineList, ResponseFilters
-from models.requests_data import MedicineFilters
-from models.user import User
 from icecream import ic
+
+from src.services.bigquery_auth_service import BigQueryAuthService
+from src.services.bigquery_upload_service import BigQueryDataUploadService
+from src.services.bigquery_retrieval_service import BigQueryDataRetrievalService
+from src.handlers.retrieval_queries import MedicinesQuerier
+from src.models.response_data import ResponseMedicineList, ResponseFilters
+from src.models.requests_data import MedicineFilters
+from src.models.medicine import Medicine
+from src.models.user import User
 
 
 router = APIRouter()
+bq_auth_service = BigQueryAuthService()
 
 
 mock_user = User(
@@ -30,21 +33,31 @@ async def get_medicamentos(
     user : User = mock_user
 ):
     try:
-        client, user_dataset = BigQueryAuthService.get_client(user.token)
+        client, user_dataset = bq_auth_service.get_client(user.token)
         retrieval_service = BigQueryDataRetrievalService(client)
         med_querier = MedicinesQuerier(user_dataset)
 
-        count_all_query = med_querier.make_count_all_query(type, filters.origin, filters.destination)
+        count_all_query = med_querier.make_count_all_query(filters)
         total_results = retrieval_service.execute_query(count_all_query).to_dataframe().total[0]
 
-        select_query = med_querier.make_select_query(type, filters.origin, filters.destination, filters.sort, filters.page, filters.per_page)
-        results = retrieval_service.execute_query(select_query)
-        ic(type(results))
+        select_query = med_querier.make_select_query(filters)
+
+        results = retrieval_service.execute_query(select_query).to_dataframe().to_dict(orient="records")
+        results = [dict(result) for result in results]
+        results_list = []
+        for result in results:
+            results_list.append(
+                Medicine(
+                    id_medicine = result["id_medicine"],
+                    descr_medicine = result["descr_medicine"],
+                    id_type = result["id_type"],    
+                )
+            )
 
         total_pages = retrieval_service.get_total_pages(total_results, filters.per_page)
 
         response_data = ResponseMedicineList(
-            data = results,
+            data = results_list,
             page = filters.page,
             per_page = filters.per_page,
             total_pages = total_pages,
@@ -63,7 +76,7 @@ async def get_medicamentos_filters(
     user: User = mock_user
 ):
     try:
-        client, user_dataset = BigQueryAuthService.get_client(user.token)
+        client, user_dataset = bq_auth_service.get_client(user.token)
         upload_service = BigQueryDataUploadService(client)
         med_querier = MedicinesQuerier(user_dataset)
 

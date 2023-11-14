@@ -1,5 +1,3 @@
-from google.cloud import bigquery
-
 class BigQueryDataRetrievalService:
     def __init__(self, bigquery_client):
         self.client = bigquery_client

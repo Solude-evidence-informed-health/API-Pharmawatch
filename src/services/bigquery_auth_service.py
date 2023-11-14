@@ -1,9 +1,11 @@
 from google.cloud import bigquery
 from icecream import ic
 
+
 AUTHDATASET = {
     'mocktoken': 'Pharmawatch'
 }
+
 
 class BigQueryAuthService:
     client = None
