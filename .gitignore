@@ -26,3 +26,5 @@ build/
 
 # Credentials
 solude-growth-service-admin.json
+.solude-growth-service-admin.json
+.json
