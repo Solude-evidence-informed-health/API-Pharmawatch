@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 class User(BaseModel):
-    token: str
-    first_name: str
-    last_name: str
-    organization: int
-    email: str
+    token : str
+    descr_first_name : str
+    descr_last_name : str
+    organization : int
+    descr_email : str
 

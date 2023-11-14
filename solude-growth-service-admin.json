@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "solude-growth",
+  "private_key_id": "80db8c4163b49734208fd704911cc6c2d77f44c9",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCitajSQR0madwJ\n/SeKH2l2tQnzsENGcQ1nH3KYDpek9bNsz/PZiBMYkzBeMkLvOdJaufBi6U/paztS\n7mPvk5ZrlCDeudy1kByNWgA+t1DJVU1YOjCnJgWvxVsSmJcIlyxdkYoJQDZxuVno\nRdx0VeAfgJBa/YWT7qZS5J4yGWsptP8iYmz14SUNynhcsanXbyLy1D59KQTZ4RK+\nAmlQL40zyzkOPsPtYERG0wsRok8FOyKil1RhUne5PIvQAtQI0CWECH+h/dZL+IJm\nwgqJfREfX3LzCeG7bCZY4e1QQC6g9oSfZIm+2SFNBd5wjQzorfJk3sQEcpdWI1Zf\nnteHufnhAgMBAAECggEAL1FrFjIvewNgJVuEyytVbVs62K6S8gJgpnPDzKq5uRRn\nKKbVQJbNDuGHOG2ff5iuLwpR+UHmpngz2WtQjtS58vEyGfOtVvPhCc55scN38AUp\nqBXMHl/1WWeok6Dik3H7Sf7QSN5utuXzWpQuh3qN4jtuP7fox9uobQTlaKZxvr/Y\nDH6qDZH6maoOBAXizrBoWKzdHRUs+o5EhwVpwctzfUP9YGRuT6Pg2795Jex45R/6\nH/ag1PcHXeeRmyQMtLaeWoZ1tFWpzNXHHYjDwdabujWQWgLjkYKHOWODQSbk3seN\nwYr7QNvR7rg284raXx4QIVl6fr1PeTHfcA3uYwwSfQKBgQDgvKvHgbK5F71kjFov\nAQgaFRYvO+aJUYqIOLsd5DLg/vZgvIOqEsT/yQ+c9PVacATEpWCdaH6OiXJnGrbD\njnoVId2IdQi0fWa02rewqMdq+BkVkPMvLjB8dXy3D+FQRBRYa0pWExcWDOTtv/CW\nBtSmlm54DWJ7e5peB4BaJ1qKiwKBgQC5WBIHtKClGwVAOAmyko4AFJ9lsL2/OEsp\nwLc9WxLHJCtaCkZ9EzFgaG3Q7PvYBLnxg2cIRIuyNeN7kDBv1atUSylPcJwFxIcx\nPCYOrW9Pxlv4I34P6XgY/6jmgqRWponq2w1Ic8ylAzMCuAc8fmtkctMM+slEBZtS\ntywXJV+WwwKBgBQCWF0D/DCkn3UzVdg3hEwmMnp0H9t8ChSE0IwhxDHqIW+NeT+M\nOkP3188GtE2gCZykiMybACGatTfe1gTlS5NUF5BNsz+2po1Vp+Mvs8mfW0RjSnOZ\n7jE2mKsH2+y0kwcoTk8JlhWdgkh0vWvuIcLPQ/imYG1UHPNgQZpFRLdvAoGAHemh\n106Gkr7+pPOmVQSkGE07wHy60u6x6sYojKVzLWKgAIMiBzOex3FzL8Hfj2iL3feY\nHFR7u0JJOXr25kW0xgDvZNvGwoOKUh7kAYBqM5TO6QhJYyYJ9Pbl+nXhMf7kyVub\nFDNkNsmCZRDwUgoRKQADIdgjvW+uNrZLTl0AxWMCgYBs56LGIg4BCqEAm2dJIrBR\n74/LebvETcTUfoaWlB3hvX8fSBwUlHLBDLczcNha2xblVlkuej2yb6dJpbj2o0Zg\nZq7wRhYb0UhjRNtejoQjCM+VxhDSI8PpjjPpQgwehJyoqAMM/JBZ5gbL3OUS6T8G\n3dgiAiFtgOvx4HEQp6KVog==\n-----END PRIVATE KEY-----\n",
+  "client_email": "service-admin@solude-growth.iam.gserviceaccount.com",
+  "client_id": "104791289512861696966",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/service-admin%40solude-growth.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
