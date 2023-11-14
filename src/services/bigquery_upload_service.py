@@ -1,3 +1,7 @@
+from datetime import datetime
+import os
+from icecream import ic
+
 from models.type import Type
 from models.medicine import Medicine
 from models.origin import Origin
@@ -6,9 +10,6 @@ from models.file import File
 from models.upload_data import RawMedicineData
 from models.user import User
 from models.control import Control
-from datetime import datetime
-from icecream import ic
-import os
 
 class BigQueryDataUploadService:
     def __init__(self, bigquery_client, user_dataset: str, user: User) -> None:
@@ -27,32 +28,39 @@ class BigQueryDataUploadService:
         table_id = f"{self.project_id}.{self.dataset_id}.{table_name}"
 
         table = self.client.get_table(table_id)
-        errors = self.client.insert_rows(table, [data])
+        errors = self.client.insert_rows_json(table, [data], ignore_unknown_values=True)
 
         if errors:
             raise Exception(f"Error inserting data into table {table_id}")
 
-        query = f"SELECT LAST_INSERT_ID() as id"
+        query = f"SELECT MAX(id) as id FROM `{self.project_id}.{self.dataset_id}.{table_name}`"
         result = self.execute_query(query).to_dataframe()
         return result.iloc[0]["id"]
 
-    def insert_and_get_id(self, key, data, month = None, year = None):
+    def insert_and_get_id(self, key, data, month=None, year=None):
         month_year_clause = ""
+        params = {"descr_key": data.get(f"descr_{key}")}
+        
         if month and year:
-            month_year_clause = f" AND month = {month} AND year = {year}"
-        query = f"SELECT id_{key} FROM `{self.project_id}.{self.dataset_id}.{key}` WHERE descr_{key} = '{data.get(f'descr_{key}')}'{month_year_clause}"
+            month_year_clause = " AND month = @month AND year = @year"
+            params.update({"month": month, "year": year})
+
+        query = f"SELECT id_{key} FROM `{self.project_id}.{self.dataset_id}.{key}` WHERE descr_{key} = @descr_key{month_year_clause}"
         ic(query)
 
-        result = self.execute_query(query).to_dataframe()
-        
+        result = self.execute_query(query, params).to_dataframe()
+
         if result.empty:
             id = self.insert_into_table(key, data)
         else:
             id = result.iloc[0][f"id_{key}"]
 
         return id
+    
 
     def upload_medicine_data(self, data: RawMedicineData):
+        current_date = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+
         type_data = Type(
             descr_type = data.descr_unit_type
         )
@@ -73,7 +81,8 @@ class BigQueryDataUploadService:
             user_token = self.user.token,
             month = data.month,
             year = data.year,
-            upload_date = datetime.now(),
+            upload_date = current_date,
+            descr_file = f'{data.month}-{data.year}-{self.user.descr_email}-{current_date}.csv'
         )
 
         main_data = Control(
@@ -84,7 +93,7 @@ class BigQueryDataUploadService:
             year = data.year,
             id_origin = self.insert_and_get_id("origin", origin_data),
             id_destination = self.insert_and_get_id("destination", destination_data),
-            id_upload_file = self.insert_into_table("file", upload_file_data, data.month, data.year),
+            id_upload_file = self.insert_and_get_id("file", upload_file_data, data.month, data.year),
         )
 
         self.insert_into_table("control", main_data)

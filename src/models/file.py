@@ -5,3 +5,4 @@ class File(BaseModel):
     month : int
     year : int
     upload_date : str
+    descr_file : str
