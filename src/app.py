@@ -17,7 +17,7 @@ tags_metadata = [
     ]
 
 servers = [
-        {"url": "https://api.example.com/v1", "description": "Homologation server"},
+        {"url": "https://pharmawatch-api-iqdmxo5f2a-rj.a.run.app", "description": "Homologation server"},
         {"url": "http://localhost:8000", "description": "Local development server"},
     ]
 

@@ -12,14 +12,22 @@ O Pharmawatch-API é uma API baseada em FastAPI projetada para lidar com a recup
 
 ## Rotas
 
-1. **GET /dados-farmaceuticos**
-   - Recupere dados farmacêuticos com base nas permissões do usuário.
+1. **GET /medicamentos/**
+    - Recupere dados farmacêuticos com base nas permissões do usuário.
 
-2. **POST /upload-dados**
-   - Faça upload de vários tipos de dados farmacêuticos para o BigQuery.
+2. **POST /upload/**
+    - Faça upload de vários tipos de dados farmacêuticos para o BigQuery.
 
 3. **GET /info-hospitalar**
-   - Recupere informações detalhadas sobre o hospital associado ao usuário.
+    (EM BREVE)
+    - Recupere informações detalhadas sobre o hospital associado ao usuário.
+
+4. **GET /info-usuario**
+    (EM BREVE)
+    - Recupere informações detalhadas sobre o usuário.
+
+5. **GET /medicamentos/filtros**
+    - Recupere os filtros disponíveis para a rota de recuperação de dados.
 
 ## Utilização para Testes de Desenvolvimento
 
@@ -46,7 +54,7 @@ O Pharmawatch-API é uma API baseada em FastAPI projetada para lidar com a recup
 3. Run the Docker container:
 
     ```bash
-    docker run -p 8000:8000 pharmawatch-api
+    docker run -p 80:80 pharmawatch-api
     ```
 
     A API estará acessivel em http://localhost:8000 .
@@ -56,7 +64,7 @@ O Pharmawatch-API é uma API baseada em FastAPI projetada para lidar com a recup
 Para executar os testes, use o seguinte comando:
 
 ```bash
-docker run pharmawatch-api pytest
+docker exec -it pharmawatch-api python tests/retrieval_test.py
 ```
 
 ## Documentação da API
