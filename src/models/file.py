@@ -9,7 +9,7 @@ Base = declarative_base()
 
 
 class File(BaseModel):
-    id_file : Optional[int] = None
+    id : Optional[int] = None
     user_token : int
     month : int
     year : int
@@ -20,9 +20,8 @@ class File(BaseModel):
 class FileTable(Base):
     __tablename__ = "file"
     
-    id_file = Column(Integer, primary_key=True, index=True)
-    user_token = Column(Integer, ForeignKey("user.token"))
-    month = Column(Integer)
-    year = Column(Integer)
+    id = Column(Integer, primary_key=True)
+    user_token = Column(String)
     upload_date = Column(String)
     descr_file = Column(String, unique=True)
+

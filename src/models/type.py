@@ -8,13 +8,14 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class Type(BaseModel):
-    id_type : Optional[int] = None
+class TypeBase(BaseModel):
+    id : Optional[int] = None
     descr_type : str
 
 
 class TypeTable(Base):
     __tablename__ = "type"
     
-    id_type = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     descr_type = Column(String, unique=True)
+

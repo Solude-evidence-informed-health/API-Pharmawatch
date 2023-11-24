@@ -1,139 +1,66 @@
 from datetime import datetime
 from google.cloud import bigquery
 from google.api_core.exceptions import NotFound
+from sqlalchemy.exc import DatabaseError
+from sqlalchemy.orm import Session
 import os
+from dotenv import load_dotenv
 from icecream import ic
 
-from src.models.type import Type
-from src.models.medicine import Medicine
-from src.models.origin import Origin
-from src.models.destination import Destination
-from src.models.file import File
-from src.models.upload_data import RawMedicineData
-from src.models.user import User
-from src.models.control import Control
+from src.services.bigquery_retrieval_service import BigQueryDataRetrievalService
+from src.services.bigquery_auth_service import BigQueryAuthService
+
+
+load_dotenv()
+
 
 class BigQueryDataUploadService:
-    def __init__(self, bigquery_client, user_dataset: str, user: User) -> None:
-        self.client = bigquery_client
-        self.project_id = os.getenv("GCP_PROJECT_ID")
-        self.dataset_id = user_dataset
-        self.user = user
+    def __init__(self, bq_auth_service: BigQueryAuthService):
+        self.bq_auth_service = bq_auth_service
+        self.retrieval_service = BigQueryDataRetrievalService(bq_auth_service)
 
 
-    def execute_query(self, query: str):
+    def insert_into_table(self, model, key : str, data : dict):
         try:
-            query_job = self.client.query(query)
-            results = query_job.result()
-            return results.to_dataframe()
-        except NotFound:
-            return None
-        
-    def get_model_schema(self, model_instance):
-        # Extract schema from Pydantic model instance
-        schema = model_instance.__annotations__
-        return [
-            bigquery.SchemaField(name=key, field_type=self.get_bigquery_field_type(value))
-            for key, value in schema.items()
-        ]
+            ic(f"Inserting {key} descr_{key}")
+            last_id = self.retrieval_service.fetch_last_id_from_table(key)
+            if last_id is not None:
+                new_id = last_id + 1
+            else:
+                new_id = 1
+            data["id"] = new_id
+            ic(new_id)
+            ic(data)
+            instance = model(**data)
+            ic("Adding...")
+            self.bq_auth_service.session.add(instance)
+            ic("Commiting...")
+            self.bq_auth_service.session.commit()
+            ic("Commited...")
+            return instance
+        except Exception as e:
+            ic(f"Error inserting {key} data: {e}")
+            raise e
 
-    def get_bigquery_field_type(self, python_type):
-        # Map Python types to BigQuery field types
-        type_mapping = {
-            int: "INTEGER",
-            float: "FLOAT",
-            str: "STRING",
-            bool: "BOOLEAN",
-        }
-        return type_mapping.get(python_type, "STRING")
-
-    def insert_into_table(self, table_name, data):
-        table_id = f"{self.project_id}.{self.dataset_id}.{table_name}"
-        schema = self.get_model_schema(data)
-        ic(schema)
-        
+    def insert_and_get_id(self, model, key : str, data : dict, month : int = None, year : int = None):
         try:
-            table = self.client.get_table(table_id)
-            ic(table)
-        except NotFound:            
-            table = self.client.create_table(bigquery.Table(table_id, schema=schema))
-            ic(f"Created table {table.project}.{table.dataset_id}.{table.table_id}")
+            ic(f"Inserting and getting {key} id")
+            month_year_clause = ""
+            descr_key = data[f"descr_{key}"]
 
-        data_dict = dict(data)
+            if month and year:
+                month_year_clause = f" AND month = {month} AND year = {year}"
 
-        # Insert data into the table with auto-detected schema
-        errors = self.client.insert_rows_json(table, [data_dict], ignore_unknown_values=True)
+            query = f"SELECT id FROM `{self.bq_auth_service.project_id}.{self.bq_auth_service.user_dataset}.{key}` WHERE descr_{key} = '{descr_key}'{month_year_clause}"
 
-        if errors:
-            raise Exception(f"Error inserting data into table {table_id}")
+            result = self.retrieval_service.execute_query(query)
+            
+            if result is None:
+                return self.insert_into_table(model, key, data).id
 
-        query = f"SELECT MAX(id_{table_name}) as id FROM `{self.project_id}.{self.dataset_id}.{table_name}`"
-        result = self.execute_query(query)
-        return result.iloc[0]["id"]
-
-    def insert_and_get_id(self, key, data, month=None, year=None):
-        month_year_clause = ""
+            return result[0][0]
+        except Exception as e:
+            ic(f"Error inserting and getting {key} id: {e}")
+            raise e
         
-        # Use getattr to access attribute values
-        descr_key = getattr(data, f"descr_{key}")
-        
-        if month and year:
-            month_year_clause = f" AND month = {month} AND year = {year}"
-
-        query = f"SELECT id_{key} FROM `{self.project_id}.{self.dataset_id}.{key}` WHERE descr_{key} = '{descr_key}'{month_year_clause}"
-        ic(query)
-
-        result = self.execute_query(query)
-        ic(result)
-
-        ic("insert")
-        if result is None:
-            id = self.insert_into_table(key, data)
-        elif result.empty:
-            id = self.insert_into_table(key, data)
-        else:
-            id = result.iloc[0][f"id_{key}"]
-
-        ic(id)
-
-        return id
-
-    def upload_medicine_data(self, data: RawMedicineData):
-        current_date = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-
-        type_data = Type(
-            descr_type = data.descr_unit_type
-        )
-        medicine_data = Medicine(
-            descr_medicine = data.descr_medicine,
-            id_type = self.insert_and_get_id("type", type_data),
-            month = data.month,
-            year = data.year,
-        )
-        origin_data = Origin(
-            descr_origin = data.descr_origin
-        )
-        destination_data = Destination(
-            descr_destination = data.descr_destination
-        )
-        upload_file_data = File(
-            user_token = self.user.token,
-            month = data.month,
-            year = data.year,
-            upload_date = current_date,
-            descr_file = f'{data.month}-{data.year}-{self.user.descr_email}-{current_date}.csv'
-        )
-
-        main_data = Control(
-            id_medicine = self.insert_and_get_id("medicine", medicine_data, data.month, data.year),
-            unit_value = data.unit_value,
-            unit_quantity = data.unit_quantity,
-            total_value = data.total_value,
-            month = data.month,
-            year = data.year,
-            id_origin = self.insert_and_get_id("origin", origin_data),
-            id_destination = self.insert_and_get_id("destination", destination_data),
-            id_upload_file = self.insert_and_get_id("file", upload_file_data, data.month, data.year),
-        )
-
-        self.insert_into_table("control", main_data)
+    

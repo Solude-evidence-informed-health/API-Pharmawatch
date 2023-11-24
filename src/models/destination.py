@@ -8,13 +8,13 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class Destination(BaseModel):
-    id_destination : Optional[int] = None
+class DestinationBase(BaseModel):
+    id : Optional[int] = None
     descr_destination : str
 
 
 class DestinationTable(Base):
     __tablename__ = "destination"
     
-    id_destination = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     descr_destination = Column(String, unique=True)

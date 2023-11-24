@@ -1,17 +1,15 @@
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
-import csv
 import pandas as pd
 import io
 from icecream import ic
 
 from src.services.bigquery_auth_service import BigQueryAuthService
 from src.services.bigquery_upload_service import BigQueryDataUploadService
-from src.models.upload_data import RawMedicineData
+from src.handlers.upload_handler import UploadHandler
 from src.models.user import User
 
 
 router = APIRouter()
-bq_auth_service = BigQueryAuthService()
 
 
 mock_user = User(
@@ -23,51 +21,67 @@ mock_user = User(
 )
 
 
-@router.post("/")
+@router.post(
+        "/",
+        tags=["Upload", "Management"],
+        summary="Upload Medicine Data",
+        description="Upload medicine data in CSV or Excel format to BigQuery.",
+        response_description="Success message if upload is successful."
+)
 async def upload_medicine_data(
     file: UploadFile = File(...),
     user: User = mock_user
 ):
+    """
+    Upload Medicine Data
+
+    This endpoint allows you to upload medicine data in CSV or Excel format to BigQuery.
+
+    - **file**: The CSV or Excel file containing medicine data.
+    - **user**: (Optional) The user making the request.
+
+    Returns:
+    - **Dict[str, str]**: A success message if the upload is successful.
+    - **500 Error**: An unexpected error occurred.
+    """
     try:
-        ic(file.filename)
-        ic(user.token)
-        client, user_dataset = bq_auth_service.get_client(user.token)
-        upload_service = BigQueryDataUploadService(client, user_dataset, user)
+        bq_auth_service = BigQueryAuthService(user)
+        client, session, user_dataset = bq_auth_service.get_credentials()
+        ic(f'User: {user.descr_email} with token: {user.token} from {user.organization} is uploading data: {file.filename}')
+        ic(f'BigQuery client: {client} with session: {session} on dataset: {user_dataset}')
+        bq_upload_service = BigQueryDataUploadService(bq_auth_service)
+        upload_handler = UploadHandler(bq_upload_service)
 
         contents = await file.read()
-        # read the file into a pandas dataframe according to the file type
+        contents = io.BytesIO(contents)
+
         if file.filename.endswith('.csv'):
-            df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+            try:
+                ic('Parsing csv...')
+                df = pd.read_csv(contents, sep=',', encoding='utf-8')
+            except pd.errors.ParserError as e:
+                ic(f'Error parsing CSV file: {e}')
+                raise HTTPException(status_code=400, detail='Error parsing CSV file') from e
         elif file.filename.endswith('.xlsx'):
-            df = pd.read_excel(io.BytesIO(contents))
+            try:
+                ic('Parsing excel...')
+                df = pd.read_excel(io.BytesIO(contents))
+            except pd.errors.ParserError as e:
+                ic(f'Error parsing Excel file: {e}')
+                raise HTTPException(status_code=400, detail='Error parsing Excel file') from e
         else:
             raise HTTPException(status_code=400, detail="Invalid file type")
         
-        df = df.where(pd.notnull(df), None)
+        number_columns = ['Quantidade', 'Valor unitário (R$)', 'Valor total (R$)']
+        for col in number_columns:
+            df[col] = df[col].apply(lambda x: x.replace(".", ""))
+            df[col] = df[col].apply(lambda x: x.replace(",", "."))
+            df[col] = df[col].astype(float)
+
         upload_data = df.to_dict(orient='records')
 
-        for row in upload_data:
-            try:
-                row['Quantidade'] = row['Quantidade'].replace(',', '.')
-                row['Valor unitário (R$)'] = row['Valor unitário (R$)'].replace(',', '.')
-                row['Valor unitário (R$)'] = row['Valor unitário (R$)'].replace('.', '')
-                row['Valor total (R$)'] = row['Valor total (R$)'].replace(',', '.')
-                row['Valor total (R$)'] = row['Valor total (R$)'].replace('.', '')
-
-                upload_data = RawMedicineData(
-                    descr_medicine=str(row['Material']),
-                    descr_unit_type=str(row['Unidade']),
-                    unit_quantity=float(row['Quantidade']),
-                    unit_value=float(row['Valor unitário (R$)']),
-                    total_value=float(row['Valor total (R$)']),
-                    month=int(row['Mês']),
-                    year=int(row['Ano']),
-                    descr_origin=str(row['Local']),
-                    descr_destination=str(row['Destino']),
-                )
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=str(e))
-            upload_service.upload_medicine_data(upload_data)
+        upload_handler.upload_medicine_data(upload_data)
+        bq_auth_service.finish_session()
 
         return {"message": "Data uploaded successfully"}
     except Exception as e:

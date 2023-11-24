@@ -7,16 +7,16 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-
-class Medicine(BaseModel):
-    id_medicine : Optional[int] = None
+class MedicineBase(BaseModel):
+    id : Optional[int] = None
     descr_medicine : str
+class Medicine(MedicineBase):
     id_type : str
 
 
 class MedicineTable(Base):
     __tablename__ = "medicine"
 
-    id_medicine = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     descr_medicine = Column(String, unique=True)
-    id_type = Column(Integer, ForeignKey("type.id_type"))
+    id_type = Column(Integer)

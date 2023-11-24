@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 # Local development settings
+*/__init__.py
 .env
 
 # IDE files
@@ -27,4 +28,5 @@ build/
 # Credentials
 solude-growth-service-admin.json
 .solude-growth-service-admin.json
-.json
+
+.csv
