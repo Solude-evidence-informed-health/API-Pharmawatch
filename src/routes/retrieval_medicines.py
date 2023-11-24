@@ -37,7 +37,7 @@ async def get_medicamentos(
     This endpoint allows you to retrieve a list of medicines based on the provided filters.
 
     - **filters**: The filters to apply to the medicines list.
-    - **user**: (Optional) The user making the request. Right now, this is only used to mock the user making the request.
+    - **user**: (Optional) The user making the request. Right now, this is only used to mock the user making the request. When not provided, it's used the mock token provided by the own server.
 
     Returns:
     - **ResponseMedicineList**: The list of medicines matching the provided filters.
@@ -78,7 +78,7 @@ async def get_medicamentos_filters(
 
     This endpoint allows you to retrieve the valid filters that can be applied to the Medicines list.
 
-    - **user**: (Optional) The user making the request. Right now, this is only used to mock the user making the request.
+    - **user**: (Optional) The user making the request. Right now, this is only used to mock the user making the request. When not provided, it's used the mock token provided by the own server.
 
     Returns:
     - **ResponseFilters**: The valid filters for Medicines.
