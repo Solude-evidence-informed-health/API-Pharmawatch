@@ -20,8 +20,42 @@ class RetrievalHandler:
     def __init__(self, retrieval_service: BigQueryDataRetrievalService):
         self.retrieval_service = retrieval_service
 
-    
-    def _parse_dates(self, start_date: str = None, end_date: str = None):
+    def get_start_and_latest_uid_dates(self):
+        try:
+            ic("Getting start and latest uid dates")
+            query = f"""
+                SELECT
+                    MIN(uid_mes_ano) as data_inicio,
+                    MAX(uid_mes_ano) as data_fim
+                FROM
+                    `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.controle`
+            """
+            result = self.retrieval_service.execute_query(query)
+            return result
+        except Exception as e:
+            ic(f"Error getting start and latest uid dates: {e}")
+            raise e
+
+    def parse_start_and_latest_uid_dates(self, result):
+        try:
+            ic("Parsing start and latest uid dates")
+            if result == None:
+                start_date = None
+                end_date = None
+            start_date = result[0][0]
+            # replace - for / to match date format, start_date is a string
+            start_date = start_date.replace("-", "/")
+            start_date = "01/" + start_date
+            end_date = result[0][1]
+            # replace - for / to match date format, end_date is a string
+            end_date = end_date.replace("-", "/")
+            end_date = "01/" + end_date
+            return start_date, end_date
+        except Exception as e:
+            ic(f"Error parsing start and latest uid dates: {e}")
+            raise e
+
+    def _parse_dates(self, start_date: str, end_date: str):
         start_month = start_date.split("/")[1]
         end_month = end_date.split("/")[1]
         start_year = start_date.split("/")[2]
@@ -30,7 +64,6 @@ class RetrievalHandler:
     
     def _parse_valid_months_and_years(self, start_month: int, end_month: int, start_year: int, end_year: int):
         valid_dates = ""
-        # uniques valid dates
         set_dates = set()
         for year in range(start_year, end_year + 1):
             if year == start_year:
@@ -46,27 +79,32 @@ class RetrievalHandler:
         return valid_dates
 
 
-    def _prepare_filters_where_clause(self, medicineFilters: FiltrosMaterialRequest, last_month: bool = False, last_last_month: bool = False):
-        ic("Preparing filters where clause")
+    def _prepare_filters_where_clause(self, medicineFilters: FiltrosMaterialRequest = None, last_month: bool = False, last_last_month: bool = False):
         try:
             filters = []
             where_clause = ""
-            medicineFilters = medicineFilters.model_dump()
-            ic(medicineFilters)
-            ic("Filtering ids...")
-            for filter in FILTERS.keys():
-                if (f'id_{filter}' in medicineFilters):
-                    if (medicineFilters[f'id_{filter}']) != None:
-                        prefix = FILTERS[filter]
-                        filters.append(f"{prefix}.id_{filter} IN ({', '.join([str(value) for value in medicineFilters[f'id_{filter}']])})")
-            ic("Filtering dates...")
-            if (medicineFilters['data_inicio'] != None) and (medicineFilters['data_fim'] != None):
+            if medicineFilters != None: 
+                ic("Preparing filters where clause")
+                medicineFilters = medicineFilters.model_dump()
+                ic(medicineFilters)
+                ic("Filtering ids...")
+                for filter in FILTERS.keys():
+                    if (f'id_{filter}' in medicineFilters):
+                        if (medicineFilters[f'id_{filter}']) != None:
+                            prefix = FILTERS[filter]
+                            filters.append(f"{prefix}.id_{filter} IN ({', '.join([str(value) for value in medicineFilters[f'id_{filter}']])})")
+                ic("Filtering dates...")
+                if (medicineFilters['data_inicio'] == None) and (medicineFilters['data_fim'] == None):
+                    dates_response = self.get_start_and_latest_uid_dates()
+                    start_date, end_date = self.parse_start_and_latest_uid_dates(dates_response)
+                    medicineFilters['data_inicio'] = start_date
+                    medicineFilters['data_fim'] =  end_date
                 start_month, end_month, start_year, end_year = self._parse_dates(medicineFilters['data_inicio'], medicineFilters['data_fim'])
                 if last_last_month or last_month:
                     if last_last_month and (end_month == 1):
                         month = 12
                         year = end_year - 1
-                    if last_last_month and (end_month != 1):
+                    elif last_last_month and (end_month != 1):
                         month = end_month - 1
                         year = end_year
                     elif last_month:
@@ -78,42 +116,48 @@ class RetrievalHandler:
                     date = self._parse_valid_months_and_years(start_month, end_month, start_year, end_year)
                     operation = "IN"
                 filters.append(f"c.uid_mes_ano {operation} {date}")
-            if filters:
-                where_clause = "WHERE " + " AND ".join(filters)
-            ic(f"Where clause: {where_clause}")
+                if filters:
+                    where_clause = "WHERE " + " AND ".join(filters)
+                ic(f"Where clause: {where_clause}")
             return where_clause
         except Exception as e:
             ic(f"Error preparing where clause: {e}")
             raise e
     
 
-    def _prepare_order_by_clause(self, sort: List[str], ascending: bool, abc: bool = False):
+    def _prepare_order_by_clause(self, sort: List[str] = None, ascending: bool = False, abc: bool = False):
         try:
-            ic("Preparing order by clause")
             order_by_clause = ""
-            if sort:
+            if sort != None:
+                ic("Preparing order by clause")
                 prefix = ""
                 order_by_clause = "ORDER BY " + ", ".join([f"{prefix}{column} {'ASC' if ascending else 'DESC'}" for column in sort])
-            ic(f"Order by clause: {order_by_clause}")
+                ic(f"Order by clause: {order_by_clause}")
             return order_by_clause
         except Exception as e:
             ic(f"Error preparing order by clause: {e}")
             raise e
         
-    def _prepare_limit_offset_clause(self, page: int, per_page: int):
+    def _prepare_limit_offset_clause(self, page: int = None, per_page: int = None):
         try:
-            ic("Preparing limit and offset clause")
-            limit_offset_clause = f"LIMIT {per_page} OFFSET {per_page * (page - 1)}"
-            ic(f"Limit offset clause: {limit_offset_clause}")
+            limit_offset_clause = ""
+            if page != None and per_page != None:
+                ic("Preparing limit and offset clause")
+                limit_offset_clause = f"LIMIT {per_page} OFFSET {per_page * (page - 1)}"
+                ic(f"Limit offset clause: {limit_offset_clause}")
             return limit_offset_clause
         except Exception as e:
             ic(f"Error preparing limit offset clause: {e}")
             raise e
         
-    def get_total_pages(self, result_dict, page_size):
+    def get_total_pages(self, result_dict, per_page):
         ic("Getting total for pagination")
-        total_records = len(result_dict)
-        return total_records, (total_records + page_size - 1) // page_size
+        total_records = len(result_dict) if (result_dict != None) and (result_dict != []) else 0
+        if total_records != 0 and per_page != None:
+            total_pages = (total_records + per_page - 1) // per_page
+        else:
+            total_pages = 1
+        return total_records, total_pages
 
     def retrieve_curva_abc(self, medicineFilters: FiltrosMaterialRequest):
         try:
@@ -130,12 +174,12 @@ class RetrievalHandler:
                             m.descr_material AS material,
                             t.descr_tipo AS tipo,
                             SUM(c.quantidade_unidade) AS quantidade_unidade,
-                            c.valor_unidade AS valor_unidade,
-                            ROUND(SUM(c.valor_total), 2) AS valor_total,
-                            ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 2) as percentual,
+                            ROUND(AVG(c.valor_unidade), 3) AS valor_unidade,
+                            ROUND(SUM(c.valor_total), 3) AS valor_total,
+                            ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) as percentual,
                             CASE
-                                WHEN ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 2) >= 0.8 THEN 'A'
-                                WHEN ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 2) < 0.8 AND ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 2) >= 0.05 THEN 'B'
+                                WHEN ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) >= 0.8 THEN 'A'
+                                WHEN ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) < 0.8 AND ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) >= 0.05 THEN 'B'
                                 ELSE 'C'
                             END AS curva_abc
                         FROM
@@ -151,8 +195,7 @@ class RetrievalHandler:
                         {where_clause}
                         GROUP BY
                             m.descr_material,
-                            t.descr_tipo,
-                            c.valor_unidade
+                            t.descr_tipo
                     ),
 
                     ULTIMOMMES AS (
@@ -171,8 +214,7 @@ class RetrievalHandler:
                             m.id_tipo = t.id
                         {last_month_where_clause}
                         GROUP BY
-                            m.descr_material,
-                            c.valor_unidade
+                            m.descr_material
                     ),
 
                     PENULTIMOMES AS (
@@ -191,8 +233,7 @@ class RetrievalHandler:
                             m.id_tipo = t.id
                         {last_last_month_where_clause}
                         GROUP BY
-                            m.descr_material,
-                            c.valor_unidade
+                            m.descr_material
                     )
 
                 SELECT
@@ -203,7 +244,7 @@ class RetrievalHandler:
                     mi.valor_total AS valor_total,
                     mi.percentual AS percentual_valor_total,
                     mi.curva_abc AS curva_abc,
-                    ROUND((um.quantidade_unidade / pm.quantidade_unidade) * 100, 2) as variacao_cp
+                    ROUND(((um.quantidade_unidade - pm.quantidade_unidade) / pm.quantidade_unidade) * 100, 3) as variacao_cp
                 FROM
                     MATERIALINFO AS mi
                 LEFT JOIN
@@ -223,21 +264,24 @@ class RetrievalHandler:
             ic(f"Error retrieving data with filters: {e}")
             raise e
      
-
-    def parse_response_curva_abc(self, result, page, per_page):
+     
+    def parse_response_curva_abc(self, result, page: int, per_page: int):
         try:
             ic("Parsing response material list")
             material_list = []
-            for result_record in result:
-                ic(result)
-                material_list.append(AbcBase(**result_record))
+            if result != None:
+                for result_record in result:
+                    #ic(result_record)
+                    material_list.append(AbcBase(**result_record))
             total_records, total_pages = self.get_total_pages(material_list, per_page)
+            if per_page == None:
+                per_page = total_records
             response_material_list = CurvaAbcMaterialResponse(
                 data = material_list,
                 page = page,
                 per_page = per_page,
                 total_pages = total_pages,
-                total = total_records,
+                total_records = total_records,
             )
             ic(response_material_list)
             return response_material_list
@@ -264,6 +308,13 @@ class RetrievalHandler:
             for filter, result in result_filters.items():
                 result = sorted(result, key=lambda x: x[1])
                 valid_filters[filter] = result
+
+            dates_response = self.get_start_and_latest_uid_dates()
+            start_date, end_date = self.parse_start_and_latest_uid_dates(dates_response)
+            start_month, end_month, start_year, end_year = self._parse_dates(start_date, start_date)
+            dates = self._parse_valid_months_and_years(start_month, end_month, start_year, end_year)
+            valid_filters['datas'] = dates
+            
             ic(valid_filters)
             return valid_filters
         except Exception as e:

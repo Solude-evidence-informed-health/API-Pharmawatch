@@ -2,8 +2,10 @@ import requests
 from icecream import ic
 
 
-#BASE_URL = "http://localhost:8000/upload/"
-BASE_URL = "https://pharmawatch-api-iqdmxo5f2a-rj.a.run.app/upload/"
+BASE_URL = "http://localhost:8000"
+#BASE_URL = "https://pharmawatch-api-iqdmxo5f2a-rj.a.run.app"
+UPLOAD_URL = BASE_URL + "/upload"
+RESET_URL = UPLOAD_URL + "/reset-database"
 CSV_FILE_PATH = "./tests/data/pharmawatch.csv"
 
 #user_token = "your_user_token"
@@ -17,7 +19,8 @@ ic(files)
 
 
 try:
-    response = requests.post(BASE_URL, files = files)
+    response = requests.get(RESET_URL)
+    response = requests.post(UPLOAD_URL, files = files)
     response.raise_for_status()
     print("Data uploaded successfully")
 except requests.exceptions.HTTPError as errh:

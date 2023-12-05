@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from fastapi import Query
+from typing import Optional
 
 
 class InfoMaterial(BaseModel):
@@ -13,9 +14,9 @@ class InfoMaterial(BaseModel):
 class AbcBase(InfoMaterial):
     percentual_valor_total: float
     curva_abc: str
-    variacao_cp: float
+    variacao_cp: Optional[float]
 
 
 class PaginationBase(BaseModel):
-    page : int = Query(1, gt=0)
-    per_page : int = Query(10, gt=0)
+    page : Optional[int] = Query(1, gt=0)
+    per_page : Optional[int] = None

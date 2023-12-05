@@ -29,7 +29,7 @@ mock_user = UsuarioBase(
         description="Given a set of filters, retrieves the complete ABC Curve of materials used in a given period."
         )
 async def get_materials_abc_curve(
-    filters : FiltrosMaterialRequest,
+    filters : FiltrosMaterialRequest = FiltrosMaterialRequest(),
     user : UsuarioBase = mock_user
 ):
     """
@@ -71,7 +71,7 @@ async def get_materials_abc_curve(
         summary="Retrieve Valid Materials Filters",
         description="Retrieve the valid filters that can be applied to the materials list."
         )
-async def get_medicamentos_filters(
+async def get_materials_filters(
     user: UsuarioBase = mock_user
 ):
     """

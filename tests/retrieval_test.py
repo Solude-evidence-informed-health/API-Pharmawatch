@@ -3,7 +3,7 @@ from icecream import ic
 
 BASE_URL = "http://localhost:8000/materiais"
 #BASE_URL = "https://pharmawatch-api-iqdmxo5f2a-rj.a.run.app/materiais"
-MEDICINES_URL = BASE_URL + "/"
+MATERIALS_URL = BASE_URL + "/"
 FILTERS_URL = BASE_URL + "/filtros"
 
 filters = {
@@ -41,16 +41,14 @@ except Exception as e:
 
 
 try:
-    ic("Retrieving valid medicines...")
+    ic("Retrieving valid materials abc curve...")
+    ic(MATERIALS_URL)
     response = requests.get(
-        MEDICINES_URL,
-        json = {
-            "filters" : filters
-        }
+        MATERIALS_URL,
     )
     response.raise_for_status()
     ic(response.json())
-    ic("Medicines data retrieved successfully")
+    ic("materials abc curve data retrieved successfully")
 except requests.exceptions.HTTPError as errh:
     print(f"HTTP Error: {errh}")
 except requests.exceptions.ConnectionError as errc:

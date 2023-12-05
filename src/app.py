@@ -39,7 +39,7 @@ async def root():
 
 
 bq_auth_service = BigQueryAuthService()
-bq_auth_service.create_all_tables(dataset="Pharmawatch")
+#bq_auth_service.create_all_tables(dataset="Pharmawatch")
 
 
 app.include_router(retrieval_material.router, prefix="/materiais", tags=["Materials"])
