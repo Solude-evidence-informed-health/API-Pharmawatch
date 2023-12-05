@@ -2,6 +2,7 @@ import requests
 from icecream import ic
 
 BASE_URL = "http://localhost:8000/materiais"
+#BASE_URL = "https://pharmawatch-api-iqdmxo5f2a-rj.a.run.app/materiais"
 MEDICINES_URL = BASE_URL + "/"
 FILTERS_URL = BASE_URL + "/filtros"
 

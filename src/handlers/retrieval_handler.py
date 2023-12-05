@@ -35,13 +35,13 @@ class RetrievalHandler:
         for year in range(start_year, end_year + 1):
             if year == start_year:
                 for month in range(start_month, 13):
-                    set_dates.add(f"{month}-{year}")
+                    set_dates.add(f"'{month}-{year}'")
             elif year == end_year:
                 for month in range(1, end_month + 1):
-                    set_dates.add(f"{month}-{year}")
+                    set_dates.add(f"'{month}-{year}'")
             else:
                 for month in range(1, 13):
-                    set_dates.add(f"{month}-{year}")
+                    set_dates.add(f"'{month}-{year}'")
         valid_dates = "(" + ", ".join(set_dates) + ")"
         return valid_dates
 
@@ -72,7 +72,7 @@ class RetrievalHandler:
                     elif last_month:
                         month = end_month
                         year = end_year
-                    date = f"{month}-{year}"
+                    date = f"'{month}-{year}'"
                     operation = "="
                 else:
                     date = self._parse_valid_months_and_years(start_month, end_month, start_year, end_year)

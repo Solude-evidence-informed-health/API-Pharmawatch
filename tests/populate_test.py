@@ -2,7 +2,8 @@ import requests
 from icecream import ic
 
 
-BASE_URL = "http://localhost:8000/upload/"
+#BASE_URL = "http://localhost:8000/upload/"
+BASE_URL = "https://pharmawatch-api-iqdmxo5f2a-rj.a.run.app/upload/"
 CSV_FILE_PATH = "./tests/data/pharmawatch.csv"
 
 #user_token = "your_user_token"
