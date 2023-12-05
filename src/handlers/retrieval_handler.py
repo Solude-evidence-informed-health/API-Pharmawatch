@@ -311,10 +311,9 @@ class RetrievalHandler:
 
             dates_response = self.get_start_and_latest_uid_dates()
             start_date, end_date = self.parse_start_and_latest_uid_dates(dates_response)
-            start_month, end_month, start_year, end_year = self._parse_dates(start_date, start_date)
-            dates = self._parse_valid_months_and_years(start_month, end_month, start_year, end_year)
-            valid_filters['datas'] = dates
-            
+            start_month, end_month, start_year, end_year = self._parse_dates(start_date, end_date)
+            date = self._parse_valid_months_and_years(start_month, end_month, start_year, end_year)
+            valid_filters['data'] = date
             ic(valid_filters)
             return valid_filters
         except Exception as e:

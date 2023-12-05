@@ -19,3 +19,4 @@ class FiltrosResponse(BaseModel):
     tipo: Optional[List[TipoBase]] = []
     origem:  Optional[List[OrigemBase]] = []
     destino:  Optional[List[DestinoBase]] = []
+    data: Optional[List[str]] = []
