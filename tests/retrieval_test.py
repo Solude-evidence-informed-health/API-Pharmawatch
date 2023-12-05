@@ -1,17 +1,19 @@
 import requests
 from icecream import ic
 
-BASE_URL = "http://localhost:8000/medicamentos"
+BASE_URL = "http://localhost:8000/materiais"
 MEDICINES_URL = BASE_URL + "/"
 FILTERS_URL = BASE_URL + "/filtros"
 
 filters = {
-    "id_medicine" : [1, 2, 3],
-    "id_type" : [1, 2, 3],
-    "id_origin" : [1, 2, 3],
-    "id_destination" : [1, 2, 3],
-    "sort" : ["medicine", "type", "origin", "destination"],
-    "ascending" : True,
+    "ordenacao" : ["material", "tipo", "curva_abc"],
+    "ordenacao_crescente" : True,
+    "id_material" : [1, 2, 3, 4, 5],
+    "id_tipo" : [1, 2, 3],
+    "id_origem" : [1, 2, 3],
+    "id_destino" : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "data_inicio" : "01/08/2021",
+    "data_fim": "01/02/2023",
     "page" : 1,
     "per_page" : 10
 }
