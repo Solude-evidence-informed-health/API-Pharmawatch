@@ -62,20 +62,35 @@ class RetrievalHandler:
         end_year = end_date.split("/")[2]
         return int(start_month), int(end_month), int(start_year), int(end_year)
     
-    def _parse_valid_months_and_years(self, start_month: int, end_month: int, start_year: int, end_year: int):
+    def _parse_valid_months_and_years(self, start_month: int, end_month: int, start_year: int, end_year: int, string: bool = True):
         valid_dates = ""
         set_dates = set()
         for year in range(start_year, end_year + 1):
             if year == start_year:
                 for month in range(start_month, 13):
-                    set_dates.add(f"'{month}-{year}'")
+                    if string:
+                        to_add = f"'{month}-{year}'"
+                    else:
+                        to_add = f"{month}-{year}"
+                    set_dates.add(to_add)
             elif year == end_year:
                 for month in range(1, end_month + 1):
-                    set_dates.add(f"'{month}-{year}'")
+                    if string:
+                        to_add = f"'{month}-{year}'"
+                    else:
+                        to_add = f"{month}-{year}"
+                    set_dates.add(to_add)
             else:
                 for month in range(1, 13):
-                    set_dates.add(f"'{month}-{year}'")
-        valid_dates = "(" + ", ".join(set_dates) + ")"
+                    if string:
+                        to_add = f"'{month}-{year}'"
+                    else:
+                        to_add = f"{month}-{year}"
+                    set_dates.add(to_add)
+        if string:
+            valid_dates = "(" + ", ".join(set_dates) + ")"
+        else:
+            valid_dates = list(set_dates)
         return valid_dates
 
 
@@ -312,8 +327,8 @@ class RetrievalHandler:
             dates_response = self.get_start_and_latest_uid_dates()
             start_date, end_date = self.parse_start_and_latest_uid_dates(dates_response)
             start_month, end_month, start_year, end_year = self._parse_dates(start_date, end_date)
-            date = self._parse_valid_months_and_years(start_month, end_month, start_year, end_year)
-            valid_filters['data'] = date
+            date = self._parse_valid_months_and_years(start_month, end_month, start_year, end_year, False)
+            valid_filters['data'] = sorted(date)
             ic(valid_filters)
             return valid_filters
         except Exception as e:
