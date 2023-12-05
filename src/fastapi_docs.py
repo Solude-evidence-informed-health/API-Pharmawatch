@@ -2,14 +2,16 @@ title="Pharmawatch API"
 
 description="Pharmawatch API is a Solude's REST API that allows communication between the Pharmawatch web application and the Pharmawatch database on BigQuery to retrieve and upload data in a secure way and with the proper authentication."
 
-version="1.1.0"
+version="1.2.3"
 
 tags_metadata = [
-        {"name": "Filters", "description": "Operations related to filters"},
-        {"name": "Medicines", "description": "Operations related to medicines"},
+        {"name": "Filters", "description": "Operations related to filters of data"},
+        {"name": "Materials", "description": "Operations related to hospital materials"},
         {"name": "Upload", "description": "Operations related to data upload of data"},
         {"name": "Retrieval", "description": "Operations related to data retrieval of data"},
-        {"name": "Management", "description": "Operations related to data management as upload and removal"},
+        {"name": "Management", "description": "Operations related to data management as upload and removal in user level"},
+        {"name": "Removal", "description": "Operations related to data removal"},
+        {"name": "Admin", "description": "Operations related to administrative tasks"}
     ]
 
 openapi_url="/openapi.json"

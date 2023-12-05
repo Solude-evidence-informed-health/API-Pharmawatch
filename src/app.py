@@ -42,5 +42,5 @@ bq_auth_service = BigQueryAuthService()
 bq_auth_service.create_all_tables(dataset="Pharmawatch")
 
 
-app.include_router(retrieval_material.router, prefix="/materiais", tags=["Material"])
+app.include_router(retrieval_material.router, prefix="/materiais", tags=["Materials"])
 app.include_router(upload_material.router, prefix="/upload", tags=["Upload"])

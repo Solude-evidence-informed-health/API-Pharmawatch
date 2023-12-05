@@ -23,25 +23,25 @@ mock_user = UsuarioBase(
 
 @router.get(
         "/",
-        tags=["Material", "Retrieval"],
+        tags=["Materials", "Retrieval"],
         response_model = CurvaAbcMaterialResponse,
-        summary="Retrieve Complete Information of Medicines",
-        description="Given a set of filters, retrieves all information about medicines, including unitary and total price, origin and destination, and type of medicine.",
+        summary="Retrieve Complete ABC Curve of materials used in a given period",
+        description="Given a set of filters, retrieves the complete ABC Curve of materials used in a given period."
         )
-async def get_medicamentos(
+async def get_materials_abc_curve(
     filters : FiltrosMaterialRequest,
     user : UsuarioBase = mock_user
 ):
     """
-    Retrieve Complete Information of Medicines
+    Retrieve Complete Information of materials
 
-    This endpoint allows you to retrieve a list of medicines based on the provided filters.
+    This endpoint allows you to retrieve a list of materials based on the provided filters.
 
-    - **filters**: The filters to apply to the medicines list.
+    - **filters**: The filters to apply to the materials list.
     - **user**: (Optional) The user making the request. Right now, this is only used to mock the user making the request. When not provided, it's used the mock token provided by the own server.
 
     Returns:
-    - **ResponseMedicineList**: The list of medicines matching the provided filters.
+    - **CurvaAbcMaterialResponse**: The list of materials matching the provided filters.
     - **500 Error**: An unexpected error occurred.
     """
     try:
@@ -67,22 +67,22 @@ async def get_medicamentos(
 @router.get(
         "/filtros",
         response_model = FiltrosResponse,
-        tags=["Material", "Filters", "Retrieval"],
-        summary="Retrieve Valid Medicines Filters",
-        description="Retrieve the valid filters that can be applied to the Medicines list."
+        tags=["Materials", "Filters", "Retrieval"],
+        summary="Retrieve Valid Materials Filters",
+        description="Retrieve the valid filters that can be applied to the materials list."
         )
 async def get_medicamentos_filters(
     user: UsuarioBase = mock_user
 ):
     """
-    Retrieve Valid Medicines Filters
+    Retrieve Valid Materials Filters
 
-    This endpoint allows you to retrieve the valid filters that can be applied to the Medicines list.
+    This endpoint allows you to retrieve the valid filters that can be applied to the materials list.
 
     - **user**: (Optional) The user making the request. Right now, this is only used to mock the user making the request. When not provided, it's used the mock token provided by the own server.
 
     Returns:
-    - **ResponseFilters**: The valid filters for Medicines.
+    - **ResponseFilters**: The valid filters for materials.
     - **500 Error**: An unexpected error occurred.
     """
     try:

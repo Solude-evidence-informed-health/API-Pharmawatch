@@ -23,9 +23,9 @@ mock_user = UsuarioBase(
 
 @router.post(
     "/",
-    tags=["Upload", "Management"],
-    summary="Upload Medicine Data",
-    description="Upload medicine data in CSV or Excel format to BigQuery.",
+    tags=["Materials", "Upload", "Management"],
+    summary="Upload Material Data",
+    description="Upload material data in CSV or Excel format to BigQuery.",
     response_description="Success message if upload is successful."
 )
 async def upload_material_data(
@@ -33,11 +33,11 @@ async def upload_material_data(
     user: UsuarioBase = mock_user
 ):
     """
-    Upload Medicine Data
+    Upload Material Data
 
-    This endpoint allows you to upload medicine data in CSV or Excel format to BigQuery.
+    This endpoint allows you to upload material data in CSV or Excel format to BigQuery.
 
-    - **file**: The CSV or Excel file containing medicine data.
+    - **file**: The CSV or Excel file containing material data.
     - **user**: (Optional) The user making the request.
 
     Returns:
@@ -82,7 +82,7 @@ async def upload_material_data(
     
 @router.get(
     "/reset-database",
-    tags=["Remove", "Admin"],
+    tags=["Removal", "Admin"],
     summary="Reset Database",
     description="Reset the database to its initial state.",
     response_description="Success message if database is reset successfully."
