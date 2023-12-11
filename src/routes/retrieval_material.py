@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query, Depends
 from icecream import ic
 
 from src.services.bigquery_auth_service import BigQueryAuthService
@@ -29,8 +29,8 @@ mock_user = UsuarioBase(
         description="Given a set of filters, retrieves the complete ABC Curve of materials used in a given period."
         )
 async def get_materials_abc_curve(
-    filters : FiltrosMaterialRequest = FiltrosMaterialRequest(),
-    user : UsuarioBase = mock_user
+    filters: FiltrosMaterialRequest = Depends(FiltrosMaterialRequest),
+    user: UsuarioBase = mock_user
 ):
     """
     Retrieve Complete Information of materials

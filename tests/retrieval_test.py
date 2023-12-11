@@ -7,20 +7,20 @@ MATERIALS_URL = BASE_URL + "/"
 FILTERS_URL = BASE_URL + "/filtros"
 
 filters = {
-    "ordenacao" : ["material", "tipo", "curva_abc"],
-    "ordenacao_crescente" : True,
-    "id_material" : [1, 2, 3, 4, 5],
-    "id_tipo" : [1, 2, 3],
-    "id_origem" : [1, 2, 3],
-    "id_destino" : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    #"ordenacao" : ["material", "tipo", "curva_abc"],
+    #"ordenacao_crescente" : True,
+    #"id_material" : [1, 2, 3, 4, 5],
+    #"id_tipo" : [1, 2, 3],
+    #"id_origem" : [1, 2, 3],
+    #"id_destino" : [1, 2, 3, 4, 5, 6, 7, 8, 9],
     "data_inicio" : "01/08/2021",
-    "data_fim": "01/02/2023",
+    "data_fim": "01/02/2022",
     "page" : 1,
-    "per_page" : 10
+    "per_page" : 5
 }
 
 try:
-    if False:
+    if True:
         ic("Skipping valid filters retrieval...")
     else:
         ic("Retrieving valid filters...")
@@ -45,6 +45,7 @@ try:
     ic(MATERIALS_URL)
     response = requests.get(
         MATERIALS_URL,
+        params=filters
     )
     response.raise_for_status()
     ic(response.json())

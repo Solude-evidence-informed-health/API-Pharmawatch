@@ -14,8 +14,8 @@ class MaterialBase(BaseModel):
 
     
 class Material(MaterialBase):
-    descr_material_base: Optional[int] = None
-    descr_material_comp: Optional[int] = None
+    descr_material_base: Optional[str] = None
+    descr_material_comp: Optional[str] = None
     descr_metod_administracao: Optional[str] = None
     id_tipo: int
     id_tipo_unidade: int
@@ -29,8 +29,8 @@ class MaterialTable(Base):
 
     id = Column(Integer, primary_key=True)
     descr_material = Column(String, unique=True)
-    descr_material_base = Column(Integer)
-    descr_material_comp = Column(Integer)
+    descr_material_base = Column(String)
+    descr_material_comp = Column(String)
     descr_metod_administracao = Column(String)
     id_tipo = Column(Integer)
     id_tipo_unidade = Column(Integer)

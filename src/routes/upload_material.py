@@ -80,7 +80,7 @@ async def upload_material_data(
         ic(e)
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.get(
+@router.delete(
     "/reset-database",
     tags=["Removal", "Admin"],
     summary="Reset Database",

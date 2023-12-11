@@ -165,9 +165,10 @@ class RetrievalHandler:
             ic(f"Error preparing limit offset clause: {e}")
             raise e
         
-    def get_total_pages(self, result_dict, per_page):
+    def get_total_pages(self, per_page):
         ic("Getting total for pagination")
-        total_records = len(result_dict) if (result_dict != None) and (result_dict != []) else 0
+        response = self.main_query_response
+        total_records = len(response) if (response != None) and (response != []) else 0
         if total_records != 0 and per_page != None:
             total_pages = (total_records + per_page - 1) // per_page
         else:
@@ -182,6 +183,28 @@ class RetrievalHandler:
             last_last_month_where_clause = self._prepare_filters_where_clause(medicineFilters, last_last_month=True)
             order_by_clause = self._prepare_order_by_clause(medicineFilters.ordenacao, medicineFilters.ordenacao_crescente)
             limit_offset_clause = self._prepare_limit_offset_clause(medicineFilters.page, medicineFilters.per_page)
+
+            main_query = f"""
+                SELECT
+                    m.descr_material AS material,
+                    t.descr_tipo AS tipo,
+                FROM
+                    `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.controle` AS c
+                LEFT JOIN
+                    `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.material` AS m
+                ON
+                    c.id_material = m.id
+                LEFT JOIN
+                    `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.tipo` AS t
+                ON
+                    m.id_tipo = t.id
+                {where_clause}
+                GROUP BY
+                    m.descr_material,
+                    t.descr_tipo
+            """
+            self.main_query_response = self.retrieval_service.execute_query(main_query)
+
             query = f"""
                 WITH 
                     MATERIALINFO AS (
@@ -191,7 +214,7 @@ class RetrievalHandler:
                             SUM(c.quantidade_unidade) AS quantidade_unidade,
                             ROUND(AVG(c.valor_unidade), 3) AS valor_unidade,
                             ROUND(SUM(c.valor_total), 3) AS valor_total,
-                            ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) as percentual,
+                            ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER() * 100, 3) as percentual,
                             CASE
                                 WHEN ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) >= 0.8 THEN 'A'
                                 WHEN ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) < 0.8 AND ROUND(SUM(c.valor_total) / SUM(SUM(c.valor_total)) OVER(), 3) >= 0.05 THEN 'B'
@@ -223,10 +246,6 @@ class RetrievalHandler:
                             `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.material` AS m
                         ON
                             c.id_material = m.id
-                        LEFT JOIN
-                            `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.tipo` AS t
-                        ON
-                            m.id_tipo = t.id
                         {last_month_where_clause}
                         GROUP BY
                             m.descr_material
@@ -242,10 +261,6 @@ class RetrievalHandler:
                             `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.material` AS m
                         ON
                             c.id_material = m.id
-                        LEFT JOIN
-                            `{self.retrieval_service.bq_auth_service.project_id}.{self.retrieval_service.bq_auth_service.user_dataset}.tipo` AS t
-                        ON
-                            m.id_tipo = t.id
                         {last_last_month_where_clause}
                         GROUP BY
                             m.descr_material
@@ -286,11 +301,11 @@ class RetrievalHandler:
             material_list = []
             if result != None:
                 for result_record in result:
-                    #ic(result_record)
                     material_list.append(AbcBase(**result_record))
-            total_records, total_pages = self.get_total_pages(material_list, per_page)
+            total_records, total_pages = self.get_total_pages(per_page)
             if per_page == None:
                 per_page = total_records
+            ic(total_pages)
             response_material_list = CurvaAbcMaterialResponse(
                 data = material_list,
                 page = page,
